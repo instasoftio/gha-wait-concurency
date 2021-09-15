@@ -60,12 +60,36 @@ async function fetchRuns(
   ]
 }
 
+async function logs(octokitClient: Octokit, workflowId: string): Promise<void> {
+  const response = await octokitClient.request(
+    'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs',
+    {
+      owner: 'instasoftio',
+      repo: 'car-sharing',
+      workflow_id: workflowId,
+      per_page: 100
+    }
+  )
+  core.info('All:')
+  core.info(
+    JSON.stringify(
+      response.data.workflow_runs.map(r => ({
+        id: r.id,
+        createdAt: r.created_at,
+        status: r.status
+      }))
+    )
+  )
+}
+
 async function ready(
   octokitClient: Octokit,
   workflowId: string,
   runId: number,
   platform: string
 ): Promise<boolean> {
+  await logs(octokitClient, workflowId)
+
   const runs = await fetchRuns(octokitClient, workflowId)
   core.info(`platform: ${platform}`)
   runs.sort(

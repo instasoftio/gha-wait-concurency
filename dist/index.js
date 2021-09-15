@@ -85,8 +85,25 @@ function fetchRuns(octokitClient, workflowId) {
         ];
     });
 }
+function logs(octokitClient, workflowId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const response = yield octokitClient.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
+            owner: 'instasoftio',
+            repo: 'car-sharing',
+            workflow_id: workflowId,
+            per_page: 100
+        });
+        core.info('All:');
+        core.info(JSON.stringify(response.data.workflow_runs.map(r => ({
+            id: r.id,
+            createdAt: r.created_at,
+            status: r.status
+        }))));
+    });
+}
 function ready(octokitClient, workflowId, runId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
+        yield logs(octokitClient, workflowId);
         const runs = yield fetchRuns(octokitClient, workflowId);
         core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
