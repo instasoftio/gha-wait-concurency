@@ -91,9 +91,9 @@ function ready(octokitClient, workflowId, runId, platform) {
         core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         core.info('first elem:');
-        core.info(JSON.stringify(runs[0]));
+        core.info(`${runs[0].id}, ${runs[0].created_at}`);
         core.info('all elems:');
-        core.info(JSON.stringify(runs));
+        core.info(JSON.stringify(runs.map(r => ({ id: r.id, createdAt: r.created_at }))));
         // we should never get here
         if (runs.length === 0) {
             core.info('found 0 runs');
@@ -115,10 +115,12 @@ function run() {
             const timeout = new Date().getTime() + five_hours;
             while (new Date().getTime() <= timeout) {
                 if (yield ready(octokitClient, workflowId, runId, platform)) {
+                    core.info('found run');
                     return;
                 }
                 yield wait_1.wait(5e3);
             }
+            core.setFailed('timeout, no run id has been found for a while');
         }
         catch (error) {
             core.setFailed(error.message);
