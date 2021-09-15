@@ -1,15 +1,16 @@
 import * as core from '@actions/core'
 import {Octokit} from '@octokit/core'
-import {createActionAuth} from '@octokit/auth-action'
+// import {createActionAuth} from '@octokit/auth-action'
 import {wait} from './wait'
 import {components} from '@octokit/openapi-types'
 
 const octokit = new Octokit()
 
 async function authOctokitClient(): Promise<void> {
-  const auth = createActionAuth()
-  const authentication = await auth()
-  await octokit.auth(authentication.token)
+  const ghToken = core.getInput('GITHUB_TOKEN')
+  // const auth = createActionAuth()
+  // const authentication = await auth()
+  await octokit.auth(ghToken)
 }
 
 async function fetchRuns(
