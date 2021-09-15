@@ -41,18 +41,10 @@ async function ready(
   runId: number,
   platform: string
 ): Promise<boolean> {
-  const runs = await fetchRuns(octokitClient, workflowId)
-  core.info(`platform: ${platform}`)
-  core.info('all elems:')
-  core.info(
-    JSON.stringify(
-      runs.map(r => ({
-        id: r.id,
-        createdAt: r.created_at,
-        status: r.status
-      }))
-    )
+  const runs = (await fetchRuns(octokitClient, workflowId)).filter(
+    r => r.status === 'in_progress' || r.status === 'queued'
   )
+  core.info(`platform: ${platform}`)
   runs.sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
