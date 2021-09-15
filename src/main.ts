@@ -33,30 +33,30 @@ async function fetchRuns(
       per_page: 100
     }
   )
-  const responseQueued = await octokit.request(
-    'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs',
-    {
-      owner: 'instasoftio',
-      repo: 'car-sharing',
-      workflow_id: workflowId,
-      status: 'queued',
-      per_page: 100
-    }
-  )
-  const responseWaiting = await octokit.request(
-    'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs',
-    {
-      owner: 'instasoftio',
-      repo: 'car-sharing',
-      workflow_id: workflowId,
-      status: 'waiting',
-      per_page: 100
-    }
-  )
+  // const responseQueued = await octokit.request(
+  //   'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs',
+  //   {
+  //     owner: 'instasoftio',
+  //     repo: 'car-sharing',
+  //     workflow_id: workflowId,
+  //     status: 'queued',
+  //     per_page: 100
+  //   }
+  // )
+  // const responseWaiting = await octokit.request(
+  //   'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs',
+  //   {
+  //     owner: 'instasoftio',
+  //     repo: 'car-sharing',
+  //     workflow_id: workflowId,
+  //     status: 'waiting',
+  //     per_page: 100
+  //   }
+  // )
   return [
-    ...responseInProgress.data.workflow_runs,
-    ...responseQueued.data.workflow_runs,
-    ...responseWaiting.data.workflow_runs
+    ...responseInProgress.data.workflow_runs
+    // ...responseQueued.data.workflow_runs,
+    // ...responseWaiting.data.workflow_runs
   ]
 }
 
