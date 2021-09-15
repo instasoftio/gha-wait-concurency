@@ -57,60 +57,29 @@ function createOctokitClient() {
 function fetchRuns(octokitClient, workflowId) {
     return __awaiter(this, void 0, void 0, function* () {
         // TODO do we need to paginate?
-        const responseInProgress = yield octokitClient.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
-            owner: 'instasoftio',
-            repo: 'car-sharing',
-            workflow_id: workflowId,
-            status: 'in_progress',
-            per_page: 100
-        });
-        const responseQueued = yield octokitClient.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
-            owner: 'instasoftio',
-            repo: 'car-sharing',
-            workflow_id: workflowId,
-            status: 'queued',
-            per_page: 100
-        });
-        const responseWaiting = yield octokitClient.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
-            owner: 'instasoftio',
-            repo: 'car-sharing',
-            workflow_id: workflowId,
-            status: 'waiting',
-            per_page: 100
-        });
-        return [
-            ...responseInProgress.data.workflow_runs,
-            ...responseQueued.data.workflow_runs,
-            ...responseWaiting.data.workflow_runs
-        ];
-    });
-}
-function logs(octokitClient, workflowId) {
-    return __awaiter(this, void 0, void 0, function* () {
         const response = yield octokitClient.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
             owner: 'instasoftio',
             repo: 'car-sharing',
             workflow_id: workflowId,
             per_page: 100
         });
-        core.info('All:');
-        core.info(JSON.stringify(response.data.workflow_runs.map(r => ({
-            id: r.id,
-            createdAt: r.created_at,
-            status: r.status
-        }))));
+        return response.data.workflow_runs;
     });
 }
 function ready(octokitClient, workflowId, runId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield logs(octokitClient, workflowId);
         const runs = yield fetchRuns(octokitClient, workflowId);
         core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         core.info('first elem:');
         core.info(`${runs[0].id}, ${runs[0].created_at}`);
+        core.info(JSON.stringify(runs[0]));
         core.info('all elems:');
-        core.info(JSON.stringify(runs.map(r => ({ id: r.id, createdAt: r.created_at }))));
+        core.info(JSON.stringify(runs.map(r => ({
+            id: r.id,
+            createdAt: r.created_at,
+            status: r.status
+        }))));
         // we should never get here
         if (runs.length === 0) {
             core.info('found 0 runs');
