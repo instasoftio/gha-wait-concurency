@@ -78,10 +78,15 @@ function fetchRuns(workflowId) {
         ];
     });
 }
-function ready(workflowId, runId) {
+function ready(workflowId, runId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         const runs = yield fetchRuns(workflowId);
+        core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        core.info('first elem:');
+        core.info(JSON.stringify(runs[0]));
+        core.info('all elems:');
+        core.info(JSON.stringify(runs));
         // we should never get here
         if (runs.length === 0) {
             core.info('found 0 runs');
@@ -96,11 +101,12 @@ function run() {
             yield authOctokitClient();
             const workflowId = core.getInput('workflowId');
             const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
-            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"`);
-            const startedAt = new Date();
+            const platform = core.getInput('platform');
+            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
             const five_hours = 5 * 60 * 60 * 1e3;
-            while (startedAt.getTime() + five_hours < new Date().getTime()) {
-                if (yield ready(workflowId, runId)) {
+            const timeout = new Date().getTime() + five_hours;
+            while (new Date().getTime() <= timeout) {
+                if (yield ready(workflowId, runId, platform)) {
                     return;
                 }
                 yield wait_1.wait(5e3);

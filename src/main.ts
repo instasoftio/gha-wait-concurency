@@ -53,12 +53,21 @@ async function fetchRuns(
   ]
 }
 
-async function ready(workflowId: string, runId: number): Promise<boolean> {
+async function ready(
+  workflowId: string,
+  runId: number,
+  platform: string
+): Promise<boolean> {
   const runs = await fetchRuns(workflowId)
+  core.info(`platform: ${platform}`)
   runs.sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   )
+  core.info('first elem:')
+  core.info(JSON.stringify(runs[0]))
+  core.info('all elems:')
+  core.info(JSON.stringify(runs))
   // we should never get here
   if (runs.length === 0) {
     core.info('found 0 runs')
@@ -73,13 +82,14 @@ async function run(): Promise<void> {
 
     const workflowId = core.getInput('workflowId')
     const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
+    const platform = core.getInput('platform')
     core.info(
-      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"`
+      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
     )
-    const startedAt = new Date()
     const five_hours = 5 * 60 * 60 * 1e3
-    while (startedAt.getTime() + five_hours < new Date().getTime()) {
-      if (await ready(workflowId, runId)) {
+    const timeout = new Date().getTime() + five_hours
+    while (new Date().getTime() <= timeout) {
+      if (await ready(workflowId, runId, platform)) {
         return
       }
       await wait(5e3)
