@@ -70,11 +70,17 @@ function ready(octokitClient, workflowId, runId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
         const runs = yield fetchRuns(octokitClient, workflowId);
         core.info(`platform: ${platform}`);
+        core.info('all elems:');
+        core.info(JSON.stringify(runs.map(r => ({
+            id: r.id,
+            createdAt: r.created_at,
+            status: r.status
+        }))));
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         core.info('first elem:');
         core.info(`${runs[0].id}, ${runs[0].created_at}`);
         core.info(JSON.stringify(runs[0]));
-        core.info('all elems:');
+        core.info('all elems sorted:');
         core.info(JSON.stringify(runs.map(r => ({
             id: r.id,
             createdAt: r.created_at,
