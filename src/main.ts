@@ -1,19 +1,25 @@
 import * as core from '@actions/core'
 import {Octokit} from '@octokit/core'
-// import {createActionAuth} from '@octokit/auth-action'
+import {createActionAuth} from '@octokit/auth-action'
 import {wait} from './wait'
 import {components} from '@octokit/openapi-types'
 
 const octokit = new Octokit()
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function authOctokitClient(): Promise<void> {
+  const auth = createActionAuth()
+  const authentication = await auth()
+  await octokit.auth(authentication.token)
+}
+
+async function createOctokitClient(): Promise<Octokit> {
   const ghToken = core.getInput('GITHUB_TOKEN')
-  // const auth = createActionAuth()
-  // const authentication = await auth()
-  await octokit.auth(ghToken)
+  return new Octokit({auth: ghToken})
 }
 
 async function fetchRuns(
+  octokitClient: Octokit,
   workflowId: string
 ): Promise<components['schemas']['workflow-run'][]> {
   // TODO do we need to paginate?
@@ -55,11 +61,12 @@ async function fetchRuns(
 }
 
 async function ready(
+  octokitClient: Octokit,
   workflowId: string,
   runId: number,
   platform: string
 ): Promise<boolean> {
-  const runs = await fetchRuns(workflowId)
+  const runs = await fetchRuns(octokitClient, workflowId)
   core.info(`platform: ${platform}`)
   runs.sort(
     (a, b) =>
@@ -78,26 +85,26 @@ async function ready(
 }
 
 async function run(): Promise<void> {
-  // try {
-  await authOctokitClient()
-
-  const workflowId = core.getInput('workflowId')
-  const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
-  const platform = core.getInput('platform')
-  core.info(
-    `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
-  )
-  const five_hours = 5 * 60 * 60 * 1e3
-  const timeout = new Date().getTime() + five_hours
-  while (new Date().getTime() <= timeout) {
-    if (await ready(workflowId, runId, platform)) {
-      return
+  try {
+    // await authOctokitClient()
+    const octokitClient = await createOctokitClient()
+    const workflowId = core.getInput('workflowId')
+    const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
+    const platform = core.getInput('platform')
+    core.info(
+      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
+    )
+    const five_hours = 5 * 60 * 60 * 1e3
+    const timeout = new Date().getTime() + five_hours
+    while (new Date().getTime() <= timeout) {
+      if (await ready(octokitClient, workflowId, runId, platform)) {
+        return
+      }
+      await wait(5e3)
     }
-    await wait(5e3)
+  } catch (error) {
+    core.setFailed(error.message)
   }
-  // } catch (error) {
-  //   core.setFailed(error.message)
-  // }
 }
 
 run()

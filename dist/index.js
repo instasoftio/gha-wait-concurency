@@ -37,18 +37,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const core_1 = __nccwpck_require__(762);
-// import {createActionAuth} from '@octokit/auth-action'
+const auth_action_1 = __nccwpck_require__(20);
 const wait_1 = __nccwpck_require__(817);
 const octokit = new core_1.Octokit();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function authOctokitClient() {
     return __awaiter(this, void 0, void 0, function* () {
-        const ghToken = core.getInput('GITHUB_TOKEN');
-        // const auth = createActionAuth()
-        // const authentication = await auth()
-        yield octokit.auth(ghToken);
+        const auth = auth_action_1.createActionAuth();
+        const authentication = yield auth();
+        yield octokit.auth(authentication.token);
     });
 }
-function fetchRuns(workflowId) {
+function createOctokitClient() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const ghToken = core.getInput('GITHUB_TOKEN');
+        return new core_1.Octokit({ auth: ghToken });
+    });
+}
+function fetchRuns(octokitClient, workflowId) {
     return __awaiter(this, void 0, void 0, function* () {
         // TODO do we need to paginate?
         const responseInProgress = yield octokit.request('GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs', {
@@ -79,9 +85,9 @@ function fetchRuns(workflowId) {
         ];
     });
 }
-function ready(workflowId, runId, platform) {
+function ready(octokitClient, workflowId, runId, platform) {
     return __awaiter(this, void 0, void 0, function* () {
-        const runs = yield fetchRuns(workflowId);
+        const runs = yield fetchRuns(octokitClient, workflowId);
         core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         core.info('first elem:');
@@ -98,23 +104,25 @@ function ready(workflowId, runId, platform) {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        // try {
-        yield authOctokitClient();
-        const workflowId = core.getInput('workflowId');
-        const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
-        const platform = core.getInput('platform');
-        core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
-        const five_hours = 5 * 60 * 60 * 1e3;
-        const timeout = new Date().getTime() + five_hours;
-        while (new Date().getTime() <= timeout) {
-            if (yield ready(workflowId, runId, platform)) {
-                return;
+        try {
+            // await authOctokitClient()
+            const octokitClient = yield createOctokitClient();
+            const workflowId = core.getInput('workflowId');
+            const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
+            const platform = core.getInput('platform');
+            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
+            const five_hours = 5 * 60 * 60 * 1e3;
+            const timeout = new Date().getTime() + five_hours;
+            while (new Date().getTime() <= timeout) {
+                if (yield ready(octokitClient, workflowId, runId, platform)) {
+                    return;
+                }
+                yield wait_1.wait(5e3);
             }
-            yield wait_1.wait(5e3);
         }
-        // } catch (error) {
-        //   core.setFailed(error.message)
-        // }
+        catch (error) {
+            core.setFailed(error.message);
+        }
     });
 }
 run();
@@ -640,6 +648,41 @@ function toCommandValue(input) {
 }
 exports.toCommandValue = toCommandValue;
 //# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ 20:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+var authToken = __nccwpck_require__(334);
+
+const createActionAuth = function createActionAuth() {
+  if (!process.env.GITHUB_ACTION) {
+    throw new Error("[@octokit/auth-action] `GITHUB_ACTION` environment variable is not set. @octokit/auth-action is meant to be used in GitHub Actions only.");
+  }
+
+  const definitions = [process.env.GITHUB_TOKEN, process.env.INPUT_GITHUB_TOKEN, process.env.INPUT_TOKEN].filter(Boolean);
+
+  if (definitions.length === 0) {
+    throw new Error("[@octokit/auth-action] `GITHUB_TOKEN` variable is not set. It must be set on either `env:` or `with:`. See https://github.com/octokit/auth-action.js#createactionauth");
+  }
+
+  if (definitions.length > 1) {
+    throw new Error("[@octokit/auth-action] The token variable is specified more than once. Use either `with.token`, `with.GITHUB_TOKEN`, or `env.GITHUB_TOKEN`. See https://github.com/octokit/auth-action.js#createactionauth");
+  }
+
+  const token = definitions.pop();
+  return authToken.createTokenAuth(token);
+};
+
+exports.createActionAuth = createActionAuth;
+//# sourceMappingURL=index.js.map
+
 
 /***/ }),
 
