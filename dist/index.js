@@ -66,10 +66,9 @@ function fetchRuns(octokitClient, workflowId) {
         return response.data.workflow_runs;
     });
 }
-function ready(octokitClient, workflowId, runId, platform) {
+function ready(octokitClient, workflowId, runId) {
     return __awaiter(this, void 0, void 0, function* () {
         const runs = (yield fetchRuns(octokitClient, workflowId)).filter(r => r.status === 'in_progress' || r.status === 'queued');
-        core.info(`platform: ${platform}`);
         runs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         core.info('first elem:');
         core.info(`${runs[0].id}, ${runs[0].created_at}`);
@@ -95,12 +94,11 @@ function run() {
             const octokitClient = yield createOctokitClient();
             const workflowId = core.getInput('workflowId');
             const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
-            const platform = core.getInput('platform');
-            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
+            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"`);
             const five_hours = 5 * 60 * 60 * 1e3;
             const timeout = new Date().getTime() + five_hours;
             while (new Date().getTime() <= timeout) {
-                if (yield ready(octokitClient, workflowId, runId, platform)) {
+                if (yield ready(octokitClient, workflowId, runId)) {
                     core.info('found run');
                     return;
                 }

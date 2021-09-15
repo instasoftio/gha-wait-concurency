@@ -38,13 +38,11 @@ async function fetchRuns(
 async function ready(
   octokitClient: Octokit,
   workflowId: string,
-  runId: number,
-  platform: string
+  runId: number
 ): Promise<boolean> {
   const runs = (await fetchRuns(octokitClient, workflowId)).filter(
     r => r.status === 'in_progress' || r.status === 'queued'
   )
-  core.info(`platform: ${platform}`)
   runs.sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -76,14 +74,13 @@ async function run(): Promise<void> {
     const octokitClient = await createOctokitClient()
     const workflowId = core.getInput('workflowId')
     const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
-    const platform = core.getInput('platform')
     core.info(
-      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
+      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"`
     )
     const five_hours = 5 * 60 * 60 * 1e3
     const timeout = new Date().getTime() + five_hours
     while (new Date().getTime() <= timeout) {
-      if (await ready(octokitClient, workflowId, runId, platform)) {
+      if (await ready(octokitClient, workflowId, runId)) {
         core.info('found run')
         return
       }
