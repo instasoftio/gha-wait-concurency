@@ -97,24 +97,23 @@ function ready(workflowId, runId, platform) {
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield authOctokitClient();
-            const workflowId = core.getInput('workflowId');
-            const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
-            const platform = core.getInput('platform');
-            core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
-            const five_hours = 5 * 60 * 60 * 1e3;
-            const timeout = new Date().getTime() + five_hours;
-            while (new Date().getTime() <= timeout) {
-                if (yield ready(workflowId, runId, platform)) {
-                    return;
-                }
-                yield wait_1.wait(5e3);
+        // try {
+        yield authOctokitClient();
+        const workflowId = core.getInput('workflowId');
+        const runId = parseInt(core.getInput('runId')); // ${{ github.run_id }}
+        const platform = core.getInput('platform');
+        core.info(`Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`);
+        const five_hours = 5 * 60 * 60 * 1e3;
+        const timeout = new Date().getTime() + five_hours;
+        while (new Date().getTime() <= timeout) {
+            if (yield ready(workflowId, runId, platform)) {
+                return;
             }
+            yield wait_1.wait(5e3);
         }
-        catch (error) {
-            core.setFailed(error.message);
-        }
+        // } catch (error) {
+        //   core.setFailed(error.message)
+        // }
     });
 }
 run();

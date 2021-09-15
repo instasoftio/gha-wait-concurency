@@ -77,26 +77,26 @@ async function ready(
 }
 
 async function run(): Promise<void> {
-  try {
-    await authOctokitClient()
+  // try {
+  await authOctokitClient()
 
-    const workflowId = core.getInput('workflowId')
-    const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
-    const platform = core.getInput('platform')
-    core.info(
-      `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
-    )
-    const five_hours = 5 * 60 * 60 * 1e3
-    const timeout = new Date().getTime() + five_hours
-    while (new Date().getTime() <= timeout) {
-      if (await ready(workflowId, runId, platform)) {
-        return
-      }
-      await wait(5e3)
+  const workflowId = core.getInput('workflowId')
+  const runId = parseInt(core.getInput('runId')) // ${{ github.run_id }}
+  const platform = core.getInput('platform')
+  core.info(
+    `Waiting for other workflows to finish: "${workflowId}"+"${runId}"+"${platform}"`
+  )
+  const five_hours = 5 * 60 * 60 * 1e3
+  const timeout = new Date().getTime() + five_hours
+  while (new Date().getTime() <= timeout) {
+    if (await ready(workflowId, runId, platform)) {
+      return
     }
-  } catch (error) {
-    core.setFailed(error.message)
+    await wait(5e3)
   }
+  // } catch (error) {
+  //   core.setFailed(error.message)
+  // }
 }
 
 run()
