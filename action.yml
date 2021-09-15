@@ -2,10 +2,15 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  milliseconds: # change this
+  workflowId:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'the workflow id (you can pass the name of the workflow file)'
+  runId:
+    required: true
+    description: 'the run id (pass ${{ github.run_id }})'
+  GITHUB_TOKEN:
+    required: true
+    description: 'the github token (pass ${{ secrets.GITHUB_TOKEN }})'
 runs:
   using: 'node12'
   main: 'dist/index.js'
