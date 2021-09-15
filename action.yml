@@ -8,6 +8,9 @@ inputs:
   runId:
     required: true
     description: 'the run id (pass $ {{ github.run_id }})'
+  platform:
+    required: true
+    description: 'the platform (pass "android" or "ios")'
   GITHUB_TOKEN:
     required: true
     description: 'the github token (pass $ {{ secrets.GITHUB_TOKEN }})'
