@@ -45,10 +45,10 @@ async function ready(
   )
   runs.sort(
     (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      new Date(a.run_started_at).getTime() - new Date(b.run_started_at).getTime()
   )
   core.info('first elem:')
-  core.info(`${runs[0].id}, ${runs[0].created_at}`)
+  core.info(`${runs[0].id}, ${runs[0].created_at}, ${runs[0].run_started_at}`)
   core.info(JSON.stringify(runs[0]))
   core.info('all elems sorted:')
   core.info(
@@ -56,6 +56,7 @@ async function ready(
       runs.map(r => ({
         id: r.id,
         createdAt: r.created_at,
+        runStartedAt: r.run_started_at,
         status: r.status
       }))
     )
